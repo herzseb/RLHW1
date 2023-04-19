@@ -179,7 +179,7 @@ class MonteCarloControlAgent(baseAgents.BaseModelFreeControlAgent):
             self.visitCount.increment((state, action))
             # Update the return
             currentReturn = reward + self.discount*currentReturn
-            # Update the value
+            # Update the qvalue
             self.qvalues[(state,action)] +=  1./self.visitCount[(state,action)]*(currentReturn - self.qvalues[(state,action)])
 
         return self.qvalues

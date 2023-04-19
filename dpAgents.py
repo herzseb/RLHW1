@@ -132,9 +132,10 @@ class QValueIterationAgent(baseAgents.BaseDpAgent):
     """
     You can add your own functions
     """
+    
 
     def run(self):
-        util.raiseNotDefined()
+       # util.raiseNotDefined()
         
         """
         Comment out the previous line and write your code here.
@@ -147,8 +148,43 @@ class QValueIterationAgent(baseAgents.BaseDpAgent):
         
         return the number of iterations!
         """
-        
-        #return iters
+        """
+        The function that we call to calculate the qalues. 
+        Returns the number of iterations
+        """
+        thresh = self.errorThreshold*(1-self.discount)/self.discount
+        for iters in range(self.maxIters):
+            if(self._iter() < thresh):
+                break
+        return iters
+    
+    def _iter(self):
+        """
+        A single policy iteration evaluation. 
+        Returns the maximum difference between previous values and current values
+        """
+        delta = -math.inf
+        Q = copy.deepcopy(self.qvalues)
+        states = self.mdp.getStates()
+        for state in states:
+            if self.mdp.isTerminal(state):
+                continue
+            actions = self.mdp.getPossibleActions(state)
+            for action in actions:
+                qval = self._getQValue(state, action)
+                self.qvalues[(state, action)] = qval
+            delta = max(abs(Q[(state, action)]-qval),delta)
+        return delta
+    
+    def _getQValue(self, state, action):
+        val = 0
+        for actPr in self.mdp.getTransitionStatesAndProbs(state, action):
+            nextState = actPr[0]
+            pr = actPr[1]
+            if pr == 0:
+                continue
+            val += pr*(self.mdp.getReward(state, action, nextState) + self.discount*self.getValue(nextState))
+        return val
 
     def getValue(self, state):
         act = self.policy(state)
@@ -179,13 +215,16 @@ class PolicyIterationAgent(PolicyEvaluationAgent):
         """
         You can add your own fields
         """
+        self.mdp = mdp
+        self.env = env
+        self.discount = discount
 
     """
     You can add your own functions
     """
 
     def run(self):
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
         """
         Comment out the previous line and write your code here.
         You need to implement policy iteration.
@@ -203,5 +242,46 @@ class PolicyIterationAgent(PolicyEvaluationAgent):
         return the number of iterations!
         """
  
-        #return iters
+        #thresh = self.errorThreshold*(1-self.discount)/self.discount
+        init_policy_Table = util.Counter()
+        states = self.mdp.getStates()
+        for state in states:
+            if self.mdp.isTerminal(state):
+                continue
+            actions = self.mdp.getPossibleActions(state)
+            init_policy_Table[state] = random.choice(actions)
+        self.policy = policies.TabularPolicy(self, policyTable=init_policy_Table)
+        
+        for iters in range(self.maxIters):
+            self.evaluator = PolicyEvaluationAgent(self.mdp, self.env, policy=self.policy)
+            self.evaluator.run()
+            #super(PolicyEvaluationAgent, self).run()
+            self.new_policy = self.get_policy_from_values(self.evaluator)
+            self.values = self.evaluator.getValues()
+            if self.policies_equal(self.policy, self.new_policy):
+                break
+            self.policy = self.new_policy
+        return iters
+    
+    def get_policy_from_values(self, evaluator):
+        policyTable = util.Counter()
+        states = self.mdp.getStates()
+        for state in states:
+            if self.mdp.isTerminal(state):
+                continue
+            actions = self.mdp.getPossibleActions(state)
+            action_selector = util.Counter()
+            for action in actions:
+                action_selector[action] =  evaluator._getQValue(state, action, evaluator.values)
+            best_action = self.argmax(action_selector)
+            policyTable[state] = best_action
+        return policies.TabularPolicy(self, policyTable=policyTable)
+    
+    def argmax(self, dict):
+        #custom argmax since Counter.argMax and Counter.sortedKeys is broken
+        return max(dict, key=dict.get)
+    
+    def policies_equal(self, old_policy, new_policy):
+        return old_policy.policyTable == new_policy.policyTable
+            
 
