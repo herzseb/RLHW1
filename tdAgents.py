@@ -70,7 +70,7 @@ class TemporalDifferencePredictionAgent(baseAgents.BaseModelFreePredictionAgent)
         return True
 
 class SarsaAgent(baseAgents.BaseModelFreeControlAgent):
-    def __init__(self, env, discount = 0.9, epsilon=0.4, alpha=0.05, alphaScheduler = None, epsilonScheduler = None):
+    def __init__(self, env, discount = 0.9, epsilon=0.3, alpha=0.05, alphaScheduler = None, epsilonScheduler = None):
 
         super().__init__(env, discount, alpha, alphaScheduler, epsilon, epsilonScheduler)
 
@@ -127,7 +127,7 @@ class QLearningAgent(baseAgents.BaseModelFreeControlAgent):
         """
         
         #You need to pick the correct policy! Set the below field to the correct one
-        self.policy = None
+        self.policy = policies.PolicyFromQValues(self)
         
     """
     You can add your own functions
@@ -138,7 +138,7 @@ class QLearningAgent(baseAgents.BaseModelFreeControlAgent):
         self.numSteps = 0
 
     def run(self):
-        util.raiseNotDefined()
+        #util.raiseNotDefined()
         """
         Single step of the Q-Learning Algorithm
         Comment out the previous line and write your code here.
@@ -151,5 +151,17 @@ class QLearningAgent(baseAgents.BaseModelFreeControlAgent):
         return False when the episode ends, return True otherwise!
         """
         
-        #return True
+        currentState = self.env.getCurrentState()
+        if self.isTerminal(currentState):
+            return False
+        action = self.policy.epsilonGreedyAction(currentState, self.epsilon)
+        nextState, reward = self.takeAction(action)
+        if self.isTerminal(nextState):
+            self.next_q_value = 0
+        else:
+            nextAction = self.policy(nextState)
+            self.next_q_value = self.qvalues[nextState, nextAction]
+        self.qvalues[currentState, action] += self.alpha*(reward+self.discount*self.next_q_value-self.qvalues[currentState, action])
+        self.numSteps += 1
+        return True
        
