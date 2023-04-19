@@ -242,7 +242,6 @@ class PolicyIterationAgent(PolicyEvaluationAgent):
         return the number of iterations!
         """
  
-        #thresh = self.errorThreshold*(1-self.discount)/self.discount
         init_policy_Table = util.Counter()
         states = self.mdp.getStates()
         for state in states:
@@ -255,7 +254,6 @@ class PolicyIterationAgent(PolicyEvaluationAgent):
         for iters in range(self.maxIters):
             self.evaluator = PolicyEvaluationAgent(self.mdp, self.env, policy=self.policy)
             self.evaluator.run()
-            #super(PolicyEvaluationAgent, self).run()
             self.new_policy = self.get_policy_from_values(self.evaluator)
             self.values = self.evaluator.getValues()
             if self.policies_equal(self.policy, self.new_policy):

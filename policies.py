@@ -67,7 +67,6 @@ class BasePolicy():
         #Do not change the if statement
         if(epsilon < 0):
             epsilon = self.agent.epsilon
-        # util.raiseNotDefined()
         if util.flipCoin(epsilon):
             return random.choice(self.agent.getPossibleActions(state))
         return self.greedyAction(state)
