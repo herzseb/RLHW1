@@ -197,7 +197,7 @@ class PolicyFromQValues(BasePolicy):
     """
     def __init__(self, agent):
         if hasattr(agent,'epsilon'):
-            super().__init__(agent, epsilon=agent.epsilon, epsilonGreedy=agent.epsilonGreedy)
+            super().__init__(agent, epsilon=agent.epsilon)
         else:
             super().__init__(agent)
         self.agent = agent
